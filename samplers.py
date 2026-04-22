@@ -1,13 +1,12 @@
 import numpy as np
 
-# Establecemos una semilla para la replicabilidad de la imagen
-rng = np.random.default_rng(1)
-
-def box_muller(D, num_samples):
+def box_muller(D, num_samples, seed=1):
     """
     Genera una matriz de tamaño (num_samples, D) usando el método polar de Box-Muller.
     Cada fila es una muestra independiente de N(0, I_D).
     """
+    # Establecemos una semilla para la replicabilidad de la imagen
+    rng = np.random.default_rng(seed)
     # Calculamos el total de números individuales que necesitamos generar
     total_samples = D * num_samples
     samples = []
