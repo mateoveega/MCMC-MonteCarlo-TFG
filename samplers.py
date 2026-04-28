@@ -7,6 +7,7 @@ def box_muller(D, num_samples, seed=1):
     """
     # Establecemos una semilla para la replicabilidad de la imagen
     rng = np.random.default_rng(seed)
+    
     # Calculamos el total de números individuales que necesitamos generar
     total_samples = D * num_samples
     samples = []
@@ -33,3 +34,42 @@ def box_muller(D, num_samples, seed=1):
     samples_matrix = flat_samples.reshape((num_samples, D))
     
     return samples_matrix 
+
+def rejection(target_pdf, proposal_pdf, proposal_sampler, k, num_samples, seed=1):
+    """
+    Aplica el algoritmo de muestreo por rechazo.
+    
+    Parámetros:
+    - target_pdf (callable): Función que evalúa la PDF de la distribución objetivo p(x).
+    - proposal_pdf (callable): Función que evalúa la PDF de la propuesta q(x).
+    - proposal_sampler (callable): Función que genera 'num_samples' muestras de la propuesta.
+    - k (float o array): Constante de escalado tal que p(x) <= k * q(x) en todo el dominio.
+    - num_samples (int): Número total de candidatos a generar.
+    
+    Retorna:
+    - accepted_samples (np.ndarray): Las muestras que han sido aceptadas.
+    - acceptance_rate (float): La proporción de muestras aceptadas (0 a 1).
+    """
+    # Establecemos una semilla para la replicabilidad de la imagen
+    rng = np.random.default_rng(seed)
+    
+    # Extraemos todas las muestras candidatas
+    x = proposal_sampler(num_samples)
+    
+    # Evaluamos ambas PDF en los puntos generados
+    p_x = target_pdf(x)
+    q_x = proposal_pdf(x)
+    
+    # Generamos los umbrales uniformes para decidir si aceptamos
+    u = rng.uniform(0, k * q_x) # u se genera entre 0 y k * q(x)
+    
+    # Aplicamos el filtro de aceptación: u <= p(x)
+    accepted_mask = (q_x > 1e-10) & (u <= p_x) # Mantenemos q_z > 1e-10 para evitar colas de probabilidad 0
+    
+    # Extraemos solo las muestras que cumplieron la condición
+    accepted_samples = x[accepted_mask]
+    
+    # Calculamos la tasa de aceptación
+    acceptance_rate = len(accepted_samples) / num_samples
+    
+    return accepted_samples, acceptance_rate
