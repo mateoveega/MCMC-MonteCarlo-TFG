@@ -1,9 +1,17 @@
 import numpy as np
+from scipy.stats import multivariate_normal
 
 def box_muller(D, num_samples, seed=1):
     """
-    Genera una matriz de tamaño (num_samples, D) usando el método polar de Box-Muller.
-    Cada fila es una muestra independiente de N(0, I_D).
+    Genera una matriz de muestras usando el método polar de Box-Muller.
+    
+    Parámetros:
+    - D (int): Dimensión del espacio (número de columnas).
+    - num_samples (int): Número total de muestras a generar (número de filas).
+    - seed (int): Semilla para la replicabilidad de los resultados.
+    
+    Retorna:
+    - samples_matrix (np.ndarray): Matriz de tamaño (num_samples, D) con muestras N(0, I_D).
     """
     # Establecemos una semilla para la replicabilidad de la imagen
     rng = np.random.default_rng(seed)
@@ -45,6 +53,7 @@ def rejection(target_pdf, proposal_pdf, proposal_sampler, k, num_samples, seed=1
     - proposal_sampler (callable): Función que genera 'num_samples' muestras de la propuesta.
     - k (float o array): Constante de escalado tal que p(x) <= k * q(x) en todo el dominio.
     - num_samples (int): Número total de candidatos a generar.
+    - seed (int): Semilla para la replicabilidad de los resultados.
     
     Retorna:
     - accepted_samples (np.ndarray): Las muestras que han sido aceptadas.
@@ -73,3 +82,61 @@ def rejection(target_pdf, proposal_pdf, proposal_sampler, k, num_samples, seed=1
     acceptance_rate = len(accepted_samples) / num_samples
     
     return accepted_samples, acceptance_rate
+
+def random_walk_metropolis(target_pdf, num_iterations, initial_position, sigma_proposal, seed=1):
+    """
+    Algoritmo Random Walk Metropolis para cualquier distribución objetivo.
+    
+    Parámetros:
+    - target_pdf (callable): Función que evalúa la densidad de probabilidad p(x).
+    - num_iterations (int): Número de pasos de la cadena.
+    - initial_position (array-like): Punto de inicio de la cadena.
+    - sigma_proposal (float): Desviación estándar del salto de propuesta.
+    - seed (int): Semilla para la replicabilidad de los resultados.
+    
+    Retorna:
+    - np.ndarray: Matriz con las muestras de la cadena.
+    - float: Tasa de aceptación.
+    """
+    # Establecemos una semilla para la replicabilidad del experimento
+    rng = np.random.default_rng(seed)
+
+    accepted_samples = []
+    accepted_count = 0
+    
+    current_position = np.array(initial_position) # Aseguramos que la posición inicial sea un array de NumPy
+    D = len(current_position) # Inferimos la dimensión desde la posición inicial
+    p_current = target_pdf(current_position) # Calculamos la densidad inicial
+
+    for i in range(num_iterations):
+        # Generamos una propuesta de nuevo estado (z_prime) usando ruido gaussiano
+        proposal_noise = rng.normal(loc=0.0, scale=sigma_proposal, size=D)
+        z_prime = current_position + proposal_noise
+
+        p_prime = target_pdf(z_prime) # Evaluamos la densidad del salto propuesto
+
+        # Calculamos la probabilidad de aceptación alpha
+        if p_current == 0 and p_prime > 0:
+            alpha = 1.0
+        elif p_current == 0 and p_prime == 0:
+            alpha = 0.0
+        elif p_current > 0:
+            alpha = min(1.0, p_prime / p_current)
+        else:
+            alpha = 0.0
+
+        # Vemos si el salto propuesto se acepta o no
+        u = rng.random()
+        # Si se acepta, actualizamos la posición y la densidad actual
+        if u <= alpha:
+            current_position = z_prime
+            p_current = p_prime
+            accepted_count += 1
+
+        # Agregamos la posición actual a las muestras
+        accepted_samples.append(current_position.copy())
+
+    # Calculamos la tasa de aceptación
+    acceptance_rate = accepted_count / num_iterations
+
+    return np.array(accepted_samples), acceptance_rate
