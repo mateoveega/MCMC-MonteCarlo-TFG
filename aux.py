@@ -1,4 +1,5 @@
 import re
+import unicodedata
 import numpy as np
 
 def char_to_int(c):
@@ -12,11 +13,26 @@ def int_to_char(i):
     return chr(i + 65)
 
 def clean_text_with_spaces(text):
-    """Limpia el texto dejando letras mayúsculas y espacios reales."""
+    """
+    Limpia el texto convirtiendo a mayúsculas, eliminando tildes
+    y dejando solo letras A-Z y espacios.
+    """
+    # 1. Convertir a mayúsculas
     text = text.upper()
+    
+    # 2. Normalizar tildes (NFD separa la letra del acento)
+    # Ejemplo: 'Á' se convierte en 'A' + '´'
+    text = unicodedata.normalize('NFD', text)
+    
+    # 3. Codificar en ASCII ignorando caracteres no representables (los acentos)
+    # y decodificar de nuevo a string.
+    text = text.encode('ascii', 'ignore').decode('utf-8')
+    
+    # 4. Tu lógica original de limpieza con Regex
     text = re.sub(r'[\n\t]+', ' ', text) # Saltos de línea a espacios
-    text = re.sub(r'[^A-Z ]', '', text)  # Mantenemos A-Z y espacios
+    text = re.sub(r'[^A-Z ]', '', text)  # Mantenemos solo A-Z y espacios
     text = re.sub(r' +', ' ', text)      # Colapsamos espacios múltiples
+    
     return text.strip()
 
 def get_bigram_matrix_27(text,size):
