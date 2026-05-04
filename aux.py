@@ -56,3 +56,4 @@ def transition_b2_structural(current_state, seed=1):
         p1, p2 = rng.choice(indices_frecuentes, size=2, replace=False)
         proposed[p1], proposed[p2] = proposed[p2], proposed[p1]
         return proposed
+
