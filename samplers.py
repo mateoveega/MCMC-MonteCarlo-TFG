@@ -226,3 +226,21 @@ def metropolis_hastings_log(initial_state, log_target_pdf, proposal_sampler, log
         historial.append(current_log_target)
         
     return best_state, historial
+
+def composite_transition(base_transitions, alphas, seed = 1):
+    # Establecemos una semilla para la replicabilidad de la imagen
+    rng = np.random.default_rng(seed)
+
+    # Asegurarnos de que las probabilidades suman exactamente 1
+    assert np.isclose(sum(alphas), 1.0), "¡Error! El vector de alphas debe sumar 1."
+
+    # Esta es la función interna que Metropolis va a llamar miles de veces
+    def unified_transition(current_state, rng):
+        # rng.choice elige una función de la lista basándose en los alphas
+        chosen_function = rng.choice(base_transitions, p=alphas)
+        
+        # Ejecutamos la función que ha tocado y devolvemos el resultado
+        return chosen_function(current_state, rng)
+
+    # Devolvemos la función ya configurada
+    return unified_transition
