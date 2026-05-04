@@ -30,13 +30,11 @@ def get_bigram_matrix_27(text,size):
     matrix = matrix / matrix.sum(axis=1, keepdims=True)
     return matrix
 
-def transition_b1_local(current_state, seed=1):
+def transition_b1_local(current_state):
     """
     B1 (Exploración Local): Intercambia dos caracteres cualesquiera de la permutación.
     Proporciona movilidad básica en todo el espacio de búsqueda.
     """
-    # Establecemos una semilla para la replicabilidad de la imagen
-    rng = np.random.default_rng(seed)
     
     proposed = current_state.copy()
     
@@ -46,9 +44,7 @@ def transition_b1_local(current_state, seed=1):
     proposed[p1], proposed[p2] = proposed[p2], proposed[p1]
     return proposed
 
-def transition_b2_structural(current_state, seed=1):
-        # Establecemos una semilla para la replicabilidad de la imagen
-        rng = np.random.default_rng(seed)
+def transition_b2_structural(current_state):
     
         proposed = current_state.copy()
         indices_frecuentes = [0, 4, 15, 19, 18, 13]
