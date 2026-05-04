@@ -19,9 +19,9 @@ def clean_text_with_spaces(text):
     text = re.sub(r' +', ' ', text)      # Colapsamos espacios múltiples
     return text.strip()
 
-def get_bigram_matrix_27(text):
-    """Calcula la matriz (27x27) de probabilidades de bigramas."""
-    matrix = np.ones((27, 27))
+def get_bigram_matrix_27(text,size):
+    """Calcula la matriz (size x size) de probabilidades de bigramas."""
+    matrix = np.ones((size, size))
     for i in range(len(text) - 1):
         idx1 = char_to_int(text[i])
         idx2 = char_to_int(text[i+1])
@@ -29,3 +29,20 @@ def get_bigram_matrix_27(text):
 
     matrix = matrix / matrix.sum(axis=1, keepdims=True)
     return matrix
+
+def calculate_energy(perm, O_matrix, M_log_esp):
+    M_permuted = M_log_esp[np.ix_(perm, perm)]
+    energy = -np.sum(O_matrix * M_permuted)
+    return energy
+
+def proposal_B1(perm):
+    new_perm = perm.copy()
+    i, j = random.sample(range(size), 2)
+    new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
+    return new_perm
+
+def proposal_B2(perm):
+    new_perm = perm.copy()
+    i, j, k = random.sample(range(size), 3)
+    new_perm[i], new_perm[j], new_perm[k] = new_perm[k], new_perm[i], new_perm[j]
+    return new_perm
