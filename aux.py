@@ -20,8 +20,8 @@ def clean_text_with_spaces(text):
     return text.strip()
 
 def get_bigram_matrix_27(text):
-    """Calcula la matriz empírica (27x27) de probabilidades de bigramas."""
-    matrix = np.ones((ALFABETO_SIZE, ALFABETO_SIZE))
+    """Calcula la matriz (27x27) de probabilidades de bigramas."""
+    matrix = np.ones((27, 27))
     for i in range(len(text) - 1):
         idx1 = char_to_int(text[i])
         idx2 = char_to_int(text[i+1])
