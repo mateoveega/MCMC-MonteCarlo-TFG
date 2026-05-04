@@ -64,20 +64,9 @@ def transition_b2_structural(current_state, rng):
     return np.array(proposed)
 
 def transition_b3_triple(current_state, rng):
-    """
-    Permuta 3 posiciones aleatorias de la clave en forma de ciclo.
-    Ayuda a explorar el espacio de estados más rápido que un intercambio simple.
-    """
-    proposed = current_state.copy()
-    
-    # 1. Elegimos 3 índices distintos de la clave (0-26)
+    # Aseguramos que sea array de numpy para que funcione proposed[idx]
+    proposed = np.array(current_state).copy()
     idx = rng.choice(len(proposed), size=3, replace=False)
-    
-    # 2. Realizamos la rotación de los valores en esas posiciones
-    # Valor en idx[0] pasa a idx[1], idx[1] a idx[2], y idx[2] a idx[0]
     val0, val1, val2 = proposed[idx]
-    proposed[idx[1]] = val0
-    proposed[idx[2]] = val1
-    proposed[idx[0]] = val2
-    
+    proposed[idx[1]], proposed[idx[2]], proposed[idx[0]] = val0, val1, val2
     return proposed
