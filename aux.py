@@ -30,19 +30,29 @@ def get_bigram_matrix_27(text,size):
     matrix = matrix / matrix.sum(axis=1, keepdims=True)
     return matrix
 
-def calculate_energy(perm, O_matrix, M_log_esp):
-    M_permuted = M_log_esp[np.ix_(perm, perm)]
-    energy = -np.sum(O_matrix * M_permuted)
-    return energy
+def transition_b1_local(current_state, seed=1):
+    """
+    B1 (Exploración Local): Intercambia dos caracteres cualesquiera de la permutación.
+    Proporciona movilidad básica en todo el espacio de búsqueda.
+    """
+    # Establecemos una semilla para la replicabilidad de la imagen
+    rng = np.random.default_rng(seed)
+    
+    proposed = current_state.copy()
+    
+    # Elige 2 posiciones cualquiera de toda la clave
+    p1, p2 = rng.choice(len(proposed), size=2, replace=False)
+    
+    proposed[p1], proposed[p2] = proposed[p2], proposed[p1]
+    return proposed
 
-def proposal_B1(perm):
-    new_perm = perm.copy()
-    i, j = random.sample(range(size), 2)
-    new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
-    return new_perm
-
-def proposal_B2(perm):
-    new_perm = perm.copy()
-    i, j, k = random.sample(range(size), 3)
-    new_perm[i], new_perm[j], new_perm[k] = new_perm[k], new_perm[i], new_perm[j]
-    return new_perm
+def transition_b2_structural(current_state, seed=1):
+        # Establecemos una semilla para la replicabilidad de la imagen
+        rng = np.random.default_rng(seed)
+    
+        proposed = current_state.copy()
+        indices_frecuentes = [0, 4, 15, 19, 18, 13]
+        # Solo intercambia entre los números correspondientes a A, E, O, S, R, N
+        p1, p2 = rng.choice(indices_frecuentes, size=2, replace=False)
+        proposed[p1], proposed[p2] = proposed[p2], proposed[p1]
+        return proposed
