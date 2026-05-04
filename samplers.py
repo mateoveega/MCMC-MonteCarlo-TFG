@@ -184,49 +184,6 @@ def metropolis_hastings_log(initial_state, log_target_pdf, proposal_sampler, log
         
     return best_state, historial
 
-def metropolis_hastings_log(initial_state, log_target_pdf, proposal_sampler, log_proposal_pdf, iterations, seed = 1):
-    # Establecemos una semilla para la replicabilidad de la imagen
-    rng = np.random.default_rng(seed)
-
-    initial_state = initial_state
-    best_state = initial_state.copy()
-    current_state = initial_state.copy()
-
-    # Calculamos la probabilidad logarítmica del estado inicial
-    current_log_target = log_target_pdf(initial_state)
-    best_log_target = current_log_target
-    
-    historial = []
-
-    for i in range(iterations):
-        # Proponemos un nuevo estado
-        proposed_state = proposal_sampler(current_state)
-        
-        # Calculamos log-probabilidad del nuevo estado
-        proposed_log_target = log_target_pdf(proposed_state)
-        
-        # Calculamos las log-probabilidades de transición Q (Hastings)
-        log_proposal_forward = log_proposal_pdf(proposed_state, current_state)
-        log_proposal_backward = log_proposal_pdf(current_state, proposed_state)
-        
-        # Calculamos el Log-Ratio de aceptación
-        log_ratio = (proposed_log_target - current_log_target) + (log_proposal_backward - log_proposal_forward)
-        
-        # Criterio de aceptación en espacio logarítmico
-        # Si log_ratio >= 0 (el ratio normal era >= 1), aceptamos siempre.
-        if log_ratio >= 0 or np.log(rng.random()) < log_ratio:
-            current_state = proposed_state
-            current_log_target = proposed_log_target
-            
-            # Guardamos el mejor absoluto encontrado
-            if current_log_target > best_log_target:
-                best_log_target = current_log_target
-                best_state = current_state.copy()
-                
-        historial.append(current_log_target)
-        
-    return best_state, historial
-
 def composite_transition(base_transitions, alphas, seed = 1):
     # Establecemos una semilla para la replicabilidad de la imagen
     rng = np.random.default_rng(seed)
@@ -235,12 +192,13 @@ def composite_transition(base_transitions, alphas, seed = 1):
     assert np.isclose(sum(alphas), 1.0), "¡Error! El vector de alphas debe sumar 1."
 
     # Esta es la función interna que Metropolis va a llamar miles de veces
-    def unified_transition(current_state, rng):
+    def unified_transition(current_state, seed = 1):
+        rng = np.random.default_rng(seed)
         # rng.choice elige una función de la lista basándose en los alphas
         chosen_function = rng.choice(base_transitions, p=alphas)
         
         # Ejecutamos la función que ha tocado y devolvemos el resultado
-        return chosen_function(current_state, rng)
+        return chosen_function(current_state, seed=1)
 
     # Devolvemos la función ya configurada
     return unified_transition
