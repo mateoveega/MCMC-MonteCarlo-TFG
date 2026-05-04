@@ -157,7 +157,7 @@ def metropolis_hastings_log(initial_state, log_target_pdf, proposal_sampler, log
 
     for i in range(iterations):
         # Proponemos un nuevo estado
-        proposed_state = proposal_sampler(current_state)
+        proposed_state = proposal_sampler(current_state, rng)
         
         # Calculamos log-probabilidad del nuevo estado
         proposed_log_target = log_target_pdf(proposed_state)
