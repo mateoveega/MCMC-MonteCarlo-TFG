@@ -183,23 +183,3 @@ def metropolis_hastings_log(initial_state, log_target_pdf, proposal_sampler, log
         historial.append(current_log_target)
         
     return best_state, historial
-
-def transition_b2_structural(current_state, rng):
-    # 1. Convertimos a lista para poder usar .index()
-    proposed = list(current_state.copy())
-    
-    # 2. Estos son los VALORES de las letras A, E, O, S, R, N
-    letras_objetivo = [0, 4, 15, 19, 18, 13]
-    
-    # 3. Elegimos dos letras planas para intercambiar (ej: la A y la E)
-    L1, L2 = rng.choice(letras_objetivo, size=2, replace=False)
-    
-    # 4. BUSCAMOS en qué posición de la clave están esas letras ahora mismo
-    idx1 = proposed.index(L1)
-    idx2 = proposed.index(L2)
-    
-    # 5. Intercambiamos los símbolos cifrados que tienen asignados
-    proposed[idx1], proposed[idx2] = proposed[idx2], proposed[idx1]
-    
-    return np.array(proposed)
-    return unified_transition
