@@ -148,15 +148,16 @@ def metropolis_hastings_log(initial_state, log_target_pdf, proposal_sampler, log
     initial_state = initial_state
     best_state = initial_state.copy()
     current_state = initial_state.copy()
+    
     # Calculamos la probabilidad logarítmica del estado inicial
     current_log_target = log_target_pdf(initial_state)
-    best_log_target = log_P_actual
+    best_log_target = current_log_target
     
     historial = []
 
     for i in range(iterations):
         # Proponemos un nuevo estado
-        proposed_state = proposal_sampler(initial_state)
+        proposed_state = proposal_sampler(current_state)
         
         # Calculamos log-probabilidad del nuevo estado
         proposed_log_target = log_target_pdf(proposed_state)
@@ -177,7 +178,50 @@ def metropolis_hastings_log(initial_state, log_target_pdf, proposal_sampler, log
             # Guardamos el mejor absoluto encontrado
             if current_log_target > best_log_target:
                 best_log_target = current_log_target
-                best_state = estado_actual.copy()
+                best_state = current_state.copy()
+                
+        historial.append(current_log_target)
+        
+    return best_state, historial
+
+def metropolis_hastings_log(initial_state, log_target_pdf, proposal_sampler, log_proposal_pdf, iterations, seed = 1):
+    # Establecemos una semilla para la replicabilidad de la imagen
+    rng = np.random.default_rng(seed)
+
+    initial_state = initial_state
+    best_state = initial_state.copy()
+    current_state = initial_state.copy()
+
+    # Calculamos la probabilidad logarítmica del estado inicial
+    current_log_target = log_target_pdf(initial_state)
+    best_log_target = current_log_target
+    
+    historial = []
+
+    for i in range(iterations):
+        # Proponemos un nuevo estado
+        proposed_state = proposal_sampler(current_state)
+        
+        # Calculamos log-probabilidad del nuevo estado
+        proposed_log_target = log_target_pdf(proposed_state)
+        
+        # Calculamos las log-probabilidades de transición Q (Hastings)
+        log_proposal_forward = log_proposal_pdf(proposed_state, current_state)
+        log_proposal_backward = log_proposal_pdf(current_state, proposed_state)
+        
+        # Calculamos el Log-Ratio de aceptación
+        log_ratio = (proposed_log_target - current_log_target) + (log_proposal_backward - log_proposal_forward)
+        
+        # Criterio de aceptación en espacio logarítmico
+        # Si log_ratio >= 0 (el ratio normal era >= 1), aceptamos siempre.
+        if log_ratio >= 0 or np.log(rng.random()) < log_ratio:
+            current_state = proposed_state
+            current_log_target = proposed_log_target
+            
+            # Guardamos el mejor absoluto encontrado
+            if current_log_target > best_log_target:
+                best_log_target = current_log_target
+                best_state = current_state.copy()
                 
         historial.append(current_log_target)
         
