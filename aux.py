@@ -30,7 +30,7 @@ def get_bigram_matrix_27(text,size):
     matrix = matrix / matrix.sum(axis=1, keepdims=True)
     return matrix
 
-def transition_b1_local(current_state):
+def transition_b1_local(current_state, rng):
     """
     B1 (Exploración Local): Intercambia dos caracteres cualesquiera de la permutación.
     Proporciona movilidad básica en todo el espacio de búsqueda.
@@ -44,7 +44,7 @@ def transition_b1_local(current_state):
     proposed[p1], proposed[p2] = proposed[p2], proposed[p1]
     return proposed
 
-def transition_b2_structural(current_state):
+def transition_b2_structural(current_state, rng):
     
         proposed = current_state.copy()
         indices_frecuentes = [0, 4, 15, 19, 18, 13]
