@@ -183,3 +183,19 @@ def metropolis_hastings_log(initial_state, log_target_pdf, proposal_sampler, log
         historial.append(current_log_target)
         
     return best_state, historial
+
+def composite_transition(base_transitions, alphas):
+    """
+    Fábrica de transiciones compuestas: Toma un vector de transiciones base y 
+    un vector de probabilidades y devuelve una única transición unificada.
+    """
+    assert np.isclose(sum(alphas), 1.0), "¡Error! El vector de alphas debe sumar 1."
+
+    def unified_transition(current_state, rng):
+        # Elegimos una transición base según el vector de alphas
+        chosen_transition = rng.choice(base_transitions, p=alphas)
+        
+        # Ejecutamos la transición elegida
+        return chosen_transition(current_state, rng)
+
+    return unified_transition
