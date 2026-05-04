@@ -192,13 +192,12 @@ def composite_transition(base_transitions, alphas, seed = 1):
     assert np.isclose(sum(alphas), 1.0), "¡Error! El vector de alphas debe sumar 1."
 
     # Esta es la función interna que Metropolis va a llamar miles de veces
-    def unified_transition(current_state, seed = 1):
-        rng = np.random.default_rng(seed)
+    def unified_transition(current_state, rng):
         # rng.choice elige una función de la lista basándose en los alphas
         chosen_function = rng.choice(base_transitions, p=alphas)
         
         # Ejecutamos la función que ha tocado y devolvemos el resultado
-        return chosen_function(current_state, seed=1)
+        return chosen_function(current_state, rng)
 
     # Devolvemos la función ya configurada
     return unified_transition
