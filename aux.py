@@ -46,7 +46,7 @@ def get_bigram_matrix_27(text,size):
     matrix = matrix / matrix.sum(axis=1, keepdims=True)
     return matrix
 
-def transition_b1_local(current_state, rng):
+def transition_b1_double(current_state, rng):
     """
     B1 (Exploración Local): Intercambia dos caracteres cualesquiera de la permutación.
     Proporciona movilidad básica en todo el espacio de búsqueda.
@@ -79,7 +79,7 @@ def transition_b2_structural(current_state, rng):
     
     return np.array(proposed)
 
-def transition_b3_triple(current_state, rng):
+def transition_b2_triple(current_state, rng):
     # Aseguramos que sea array de numpy para que funcione proposed[idx]
     proposed = np.array(current_state).copy()
     idx = rng.choice(len(proposed), size=3, replace=False)
