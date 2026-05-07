@@ -146,7 +146,6 @@ def metropolis_hastings_log(initial_state, log_target_pdf, proposal_sampler, log
     # Establecemos una semilla para la replicabilidad de la imagen
     rng = np.random.default_rng(seed)
 
-    initial_state = initial_state
     best_state = copy.deepcopy(initial_state)
     current_state = copy.deepcopy(initial_state)
     
@@ -155,6 +154,7 @@ def metropolis_hastings_log(initial_state, log_target_pdf, proposal_sampler, log
     best_log_target = current_log_target
     
     historial = []
+    historial_estados = []
 
     for i in range(iterations):
         # Proponemos un nuevo estado
@@ -171,7 +171,6 @@ def metropolis_hastings_log(initial_state, log_target_pdf, proposal_sampler, log
         log_ratio = (proposed_log_target - current_log_target) + (log_proposal_backward - log_proposal_forward)
         
         # Criterio de aceptación en espacio logarítmico
-        # Si log_ratio >= 0 (el ratio normal era >= 1), aceptamos siempre.
         if log_ratio >= 0 or np.log(rng.random()) < log_ratio:
             current_state = proposed_state
             current_log_target = proposed_log_target
@@ -183,7 +182,10 @@ def metropolis_hastings_log(initial_state, log_target_pdf, proposal_sampler, log
                 
         historial.append(current_log_target)
         
-    return best_state, historial
+        # Guardamos una copia del estado del historial
+        historial_estados.append(copy.deepcopy(current_state))
+        
+    return best_state, historial, historial_estados
 
 def composite_transition(base_transitions, alphas):
     """
