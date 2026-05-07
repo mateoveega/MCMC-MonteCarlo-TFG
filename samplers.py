@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 from scipy.stats import multivariate_normal
 
 def box_muller(D, num_samples, seed=1):
@@ -146,8 +147,8 @@ def metropolis_hastings_log(initial_state, log_target_pdf, proposal_sampler, log
     rng = np.random.default_rng(seed)
 
     initial_state = initial_state
-    best_state = initial_state.copy()
-    current_state = initial_state.copy()
+    best_state = copy.deepcopy(initial_state)
+    current_state = copy.deepcopy(initial_state)
     
     # Calculamos la probabilidad logarítmica del estado inicial
     current_log_target = log_target_pdf(initial_state)
@@ -178,7 +179,7 @@ def metropolis_hastings_log(initial_state, log_target_pdf, proposal_sampler, log
             # Guardamos el mejor absoluto encontrado
             if current_log_target > best_log_target:
                 best_log_target = current_log_target
-                best_state = current_state.copy()
+                best_state = copy.deepcopy(current_state)
                 
         historial.append(current_log_target)
         
