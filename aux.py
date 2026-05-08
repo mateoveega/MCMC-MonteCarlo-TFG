@@ -104,3 +104,39 @@ def low_degree_node(G, seed = 1):
     node = rng.choice(candidates)
     
     return node 
+
+def data_driven_hop_probabilities(G, T_obs, dist):
+    """
+    Calcula la probabilidad para el 'Salto Dirigido por los Datos' basándose en:
+    1. Proximidad a nodos infectados: Se da más peso a los nodos cercanos a los que 
+       se detectaron primero (bajos T_obs).
+    2. Centralidad de intermediación: Identifica nodos que actúan como puentes 
+       estratégicos dentro de la topología de la red.
+    """
+    observed_nodes = list(T_obs.keys())
+    
+    # Estimamos la intermediación (Betweenness)
+    centrality = nx.betweenness_centrality(G, k=200)
+    
+    # Usamos len(G) para asegurar que el tamaño es correcto
+    hop_probabilities = np.zeros(len(G))
+
+    for node in G.nodes():
+        # Calculamos distancias a los nodos observados
+        # (Asegúrate de que 'dist' sea un diccionario de distancias)
+        dist_to_obs = [dist[node][obs] for obs in observed_nodes]
+
+        centrality_score = centrality[node]
+
+        # Peso de proximidad: a menor distancia, mayor peso
+        # Proximity weight: 1 / (1 + d)
+        proximity_weight = 1.0 / (1.0 + min(dist_to_obs))
+
+        # El score final combina la importancia estructural y la temporal
+        hop_probabilities[node] = centrality_score * proximity_weight
+
+    # Normalizamos: la suma de todas las probabilidades debe ser 1.0
+    if np.sum(hop_probabilities) > 0:
+        hop_probabilities = hop_probabilities / np.sum(hop_probabilities)
+
+    return hop_probabilities
