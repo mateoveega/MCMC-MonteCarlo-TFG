@@ -2,6 +2,7 @@ import re
 import unicodedata
 import numpy as np
 import math
+import networkx as nx
 
 def char_to_int(c):
     """Mapea A-Z a 0-25, y el espacio ' ' al índice 26."""
