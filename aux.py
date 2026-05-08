@@ -87,18 +87,18 @@ def transition_b2_triple(current_state, rng):
     proposed[idx[1]], proposed[idx[2]], proposed[idx[0]] = val0, val1, val2
     return proposed
 
- def low_degree_node(G):
+def low_degree_node(G):
     """
     Selecciona aleatoriamente un nodo del 1% de los nodos con menor grado (menos conexiones).
     """
     # Ordenamos los nodos del grafo por conexiones
     sorted_nodes = sorted(G.degree(), key=lambda x: x[1])
-
+    
     # Tomamos el 1% de nodos con menos conexiones
     candidate_count = math.ceil(len(G) * 0.01)
     candidates = [node for node, degree in sorted_nodes[:candidate_count]]
-
+    
     # Seleccionamos aleatoriamente dentro de ese grupo reducido
     node = rng.choice(candidates)
-
+    
     return node 
