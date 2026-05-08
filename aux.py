@@ -88,10 +88,11 @@ def transition_b2_triple(current_state, rng):
     proposed[idx[1]], proposed[idx[2]], proposed[idx[0]] = val0, val1, val2
     return proposed
 
-def low_degree_node(G):
+def low_degree_node(G, seed = 1):
     """
     Selecciona aleatoriamente un nodo del 1% de los nodos con menor grado (menos conexiones).
     """
+    rng = np.random.default_rng(seed)
     # Ordenamos los nodos del grafo por conexiones
     sorted_nodes = sorted(G.degree(), key=lambda x: x[1])
     
