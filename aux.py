@@ -141,3 +141,9 @@ def data_driven_hop_probabilities(G, T_obs, dist):
         hop_probabilities = hop_probabilities / np.sum(hop_probabilities)
 
     return hop_probabilities
+    
+# Banana----------------------------------------------------------------------
+
+def log_banana(x, B=0.03):
+    """Log-densidad objetivo de la distribucion platano."""
+    return -0.5 * (x[0]**2 / 100 + (x[1] + B * x[0]**2 - 100 * B)**2)
