@@ -53,8 +53,7 @@ def target_pdf_lim_gibbs(position, mu, sigma):
     return multivariate_normal.pdf(position, mean=mu, cov=sigma)
 
 def funcion_objetivo_lim_gibbs(posicion):
-    return target_pdf_lim_gibbs(posicion, media, matriz_covarianza)
-
+    return target_pdf_lim_gibbs(posicion, media = np.array([0.0, 0.0]), matriz_covarianza = np.array([[1.0, 0.9], [0.9, 1.0]]))
 
 def caracter_a_entero(c):
     """
