@@ -4,14 +4,34 @@ import numpy as np
 import math
 import networkx as nx
 from scipy.stats import norm
+
 # Capítulo 1 ==================================================================
+
 # rechazo----------------------------------------------------------------------
 def pdf_objetivo_rechazo(x):
     return 0.4 * norm.pdf(x, loc=-2, scale=1) + 0.6 * norm.pdf(x, loc=3, scale=1)
 
 def pdf_envolvente_rechazo(x):
     return norm.pdf(x, loc=0.5, scale=3)
+    
+# ARS --------------------------------------------------------------------------
+def pdf_objetivo_ars(x):
+    return np.exp(-((x - 1) ** 2))
 
+def ln_pdf_objetivo_ars(x):
+    return np.log(pdf_objetivo(x))
+
+def ln_pdf_objetivo_prima_ars(x):
+    return -2 * (x - 1)
+
+def ln_pdf_envolvente(x, nodos_x, nodos_y, nodos_dy):
+    tangentes = []
+    for i in range(len(nodos_x)):
+        tangentes.append(nodos_y[i] + nodos_dy[i] * (x - nodos_x[i]))
+    return np.min(tangentes, axis=0)
+
+def funcion_compresion(x, nodos_x, nodos_y):
+    return np.interp(x, nodos_x, nodos_y, left=-np.inf, right=-np.inf)
 
 
 def caracter_a_entero(c):
