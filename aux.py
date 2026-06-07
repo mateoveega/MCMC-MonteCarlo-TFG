@@ -19,7 +19,7 @@ def pdf_objetivo_ars(x):
     return np.exp(-((x - 1) ** 2))
 
 def ln_pdf_objetivo_ars(x):
-    return np.log(pdf_objetivo(x))
+    return np.log(pdf_objetivo_ars(x))
 
 def ln_pdf_objetivo_prima_ars(x):
     return -2 * (x - 1)
