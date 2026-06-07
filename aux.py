@@ -52,9 +52,6 @@ def generador_lcg(n, semilla=1):
 def target_pdf_lim_gibbs(position, mu, sigma):
     return multivariate_normal.pdf(position, mean=mu, cov=sigma)
 
-def funcion_objetivo_lim_gibbs(posicion):
-    return target_pdf_lim_gibbs(posicion, media, matriz_covarianza)
-
 def caracter_a_entero(c):
     """
     Mapea un carácter a su índice entero correspondiente.
