@@ -3,147 +3,197 @@ import unicodedata
 import numpy as np
 import math
 import networkx as nx
+# Capítulo 1 ==================================================================
+# rechazo----------------------------------------------------------------------
+def pdf_objetivo_rechazo(x):
+    return 0.4 * norm.pdf(x, loc=-2, scale=1) + 0.6 * norm.pdf(x, loc=3, scale=1)
 
-def char_to_int(c):
-    """Mapea A-Z a 0-25, y el espacio ' ' al índice 26."""
+def pdf_envolvente_rechazo(x):
+    return norm.pdf(x, loc=0.5, scale=3)
+
+
+
+def caracter_a_entero(c):
+    """
+    Mapea un carácter a su índice entero correspondiente.
+
+    Parámetros:
+    - c (str): Carácter a mapear. Debe ser una letra A-Z o un espacio ' '.
+
+    Retorna:
+    - (int): Índice entero correspondiente. A-Z se mapea a 0-25, y ' ' al índice 26.
+    """
     if c == ' ': return 26
     return ord(c) - 65
 
-def int_to_char(i):
-    """Mapea 0-25 a A-Z, y el índice 26 al espacio ' '."""
+def entero_a_caracter(i):
+    """
+    Mapea un índice entero a su carácter correspondiente.
+
+    Parámetros:
+    - i (int): Índice entero a mapear. 0-25 se mapea a A-Z, y 26 al espacio ' '.
+
+    Retorna:
+    - (str): Carácter correspondiente al índice.
+    """
     if i == 26: return ' '
     return chr(i + 65)
 
-def clean_text_with_spaces(text):
+def limpiar_texto_con_espacios(texto):
     """
     Limpia el texto convirtiendo a mayúsculas, eliminando tildes
     y dejando solo letras A-Z y espacios.
+
+    Parámetros:
+    - texto (str): Texto a limpiar.
+
+    Retorna:
+    - (str): Texto limpio con solo letras A-Z y espacios.
     """
-    # 1. Convertir a mayúsculas
-    text = text.upper()
-    
-    # 2. Normalizar tildes (NFD separa la letra del acento)
-    # Ejemplo: 'Á' se convierte en 'A' + '´'
-    text = unicodedata.normalize('NFD', text)
-    
-    # 3. Codificar en ASCII ignorando caracteres no representables (los acentos)
-    # y decodificar de nuevo a string.
-    text = text.encode('ascii', 'ignore').decode('utf-8')
-    
-    # 4. Tu lógica original de limpieza con Regex
-    text = re.sub(r'[\n\t]+', ' ', text) # Saltos de línea a espacios
-    text = re.sub(r'[^A-Z ]', '', text)  # Mantenemos solo A-Z y espacios
-    text = re.sub(r' +', ' ', text)      # Colapsamos espacios múltiples
-    
-    return text.strip()
+    texto = texto.upper()
+    texto = unicodedata.normalize('NFD', texto)
+    texto = texto.encode('ascii', 'ignore').decode('utf-8')
+    texto = re.sub(r'[\n\t]+', ' ', texto)
+    texto = re.sub(r'[^A-Z ]', '', texto)
+    texto = re.sub(r' +', ' ', texto)
+    return texto.strip()
 
-def get_bigram_matrix_27(text,size):
-    """Calcula la matriz (size x size) de probabilidades de bigramas."""
-    matrix = np.ones((size, size))
-    for i in range(len(text) - 1):
-        idx1 = char_to_int(text[i])
-        idx2 = char_to_int(text[i+1])
-        matrix[idx1, idx2] += 1
+def obtener_matriz_bigramas_27(texto, tamano):
+    """
+    Calcula la matriz de probabilidades de bigramas de un texto.
 
-    matrix = matrix / matrix.sum(axis=1, keepdims=True)
-    return matrix
+    Parámetros:
+    - texto (str): Texto del que se extraen los bigramas.
+    - tamano (int): Tamaño del alfabeto (número de filas y columnas de la matriz).
 
-def transition_b1_double(current_state, rng):
+    Retorna:
+    - matriz (np.ndarray): Matriz de tamaño (tamano x tamano) con las probabilidades
+      de transición entre caracteres consecutivos.
+    """
+    matriz = np.ones((tamano, tamano))
+    for i in range(len(texto) - 1):
+        idx1 = caracter_a_entero(texto[i])
+        idx2 = caracter_a_entero(texto[i+1])
+        matriz[idx1, idx2] += 1
+
+    matriz = matriz / matriz.sum(axis=1, keepdims=True)
+    return matriz
+
+def transicion_b1_doble(estado_actual, generador):
     """
     B1 (Exploración Local): Intercambia dos caracteres cualesquiera de la permutación.
     Proporciona movilidad básica en todo el espacio de búsqueda.
+
+    Parámetros:
+    - estado_actual (np.ndarray): Permutación actual de la clave.
+    - generador (np.random.Generator): Generador de números aleatorios.
+
+    Retorna:
+    - propuesta (np.ndarray): Nueva permutación con dos posiciones intercambiadas.
     """
-    
-    proposed = current_state.copy()
-    
-    # Elige 2 posiciones cualquiera de toda la clave
-    p1, p2 = rng.choice(len(proposed), size=2, replace=False)
-    
-    proposed[p1], proposed[p2] = proposed[p2], proposed[p1]
-    return proposed
+    propuesta = estado_actual.copy()
+    p1, p2 = generador.choice(len(propuesta), size=2, replace=False)
+    propuesta[p1], propuesta[p2] = propuesta[p2], propuesta[p1]
+    return propuesta
 
-def transition_b2_structural(current_state, rng):
-    # 1. Convertimos a lista para poder usar .index()
-    proposed = list(current_state.copy())
-    
-    # 2. Estos son los VALORES de las letras A, E, O, S, R, N
+def transicion_b2_estructural(estado_actual, generador):
+    """
+    B2 (Exploración Estructural): Intercambia dos letras frecuentes de la permutación.
+    Favorece el intercambio de letras comunes del español (A, E, O, S, R, N).
+
+    Parámetros:
+    - estado_actual (np.ndarray): Permutación actual de la clave.
+    - generador (np.random.Generator): Generador de números aleatorios.
+
+    Retorna:
+    - propuesta (np.ndarray): Nueva permutación con dos letras frecuentes intercambiadas.
+    """
+    propuesta = list(estado_actual.copy())
     letras_objetivo = [0, 4, 15, 19, 18, 13]
-    
-    # 3. Elegimos dos letras planas para intercambiar (ej: la A y la E)
-    L1, L2 = rng.choice(letras_objetivo, size=2, replace=False)
-    
-    # 4. BUSCAMOS en qué posición de la clave están esas letras ahora mismo
-    idx1 = proposed.index(L1)
-    idx2 = proposed.index(L2)
-    
-    # 5. Intercambiamos los símbolos cifrados que tienen asignados
-    proposed[idx1], proposed[idx2] = proposed[idx2], proposed[idx1]
-    
-    return np.array(proposed)
+    L1, L2 = generador.choice(letras_objetivo, size=2, replace=False)
+    idx1 = propuesta.index(L1)
+    idx2 = propuesta.index(L2)
+    propuesta[idx1], propuesta[idx2] = propuesta[idx2], propuesta[idx1]
+    return np.array(propuesta)
 
-def transition_b2_triple(current_state, rng):
-    # Aseguramos que sea array de numpy para que funcione proposed[idx]
-    proposed = np.array(current_state).copy()
-    idx = rng.choice(len(proposed), size=3, replace=False)
-    val0, val1, val2 = proposed[idx]
-    proposed[idx[1]], proposed[idx[2]], proposed[idx[0]] = val0, val1, val2
-    return proposed
+def transicion_b2_triple(estado_actual, generador):
+    """
+    B2 (Exploración Triple): Realiza una rotación cíclica entre tres posiciones de la permutación.
+    Proporciona una perturbación más compleja que el intercambio simple.
 
-def low_degree_node(G, seed = 1):
+    Parámetros:
+    - estado_actual (np.ndarray): Permutación actual de la clave.
+    - generador (np.random.Generator): Generador de números aleatorios.
+
+    Retorna:
+    - propuesta (np.ndarray): Nueva permutación con tres posiciones rotadas cíclicamente.
+    """
+    propuesta = np.array(estado_actual).copy()
+    idx = generador.choice(len(propuesta), size=3, replace=False)
+    val0, val1, val2 = propuesta[idx]
+    propuesta[idx[1]], propuesta[idx[2]], propuesta[idx[0]] = val0, val1, val2
+    return propuesta
+
+def nodo_bajo_grado(G, semilla=1):
     """
     Selecciona aleatoriamente un nodo del 1% de los nodos con menor grado (menos conexiones).
-    """
-    rng = np.random.default_rng(seed)
-    # Ordenamos los nodos del grafo por conexiones
-    sorted_nodes = sorted(G.degree(), key=lambda x: x[1])
-    
-    # Tomamos el 1% de nodos con menos conexiones
-    candidate_count = math.ceil(len(G) * 0.01)
-    candidates = [node for node, degree in sorted_nodes[:candidate_count]]
-    
-    # Seleccionamos aleatoriamente dentro de ese grupo reducido
-    node = rng.choice(candidates)
-    
-    return node 
 
-def data_driven_hop_probabilities(G, T_obs, dist):
+    Parámetros:
+    - G (networkx.Graph): Grafo sobre el que se opera.
+    - semilla (int): Semilla para la replicabilidad de los resultados.
+
+    Retorna:
+    - nodo (int): Nodo seleccionado aleatoriamente del grupo de menor grado.
+    """
+    generador = np.random.default_rng(semilla)
+    nodos_ordenados = sorted(G.degree(), key=lambda x: x[1])
+    num_candidatos = math.ceil(len(G) * 0.01)
+    candidatos = [nodo for nodo, grado in nodos_ordenados[:num_candidatos]]
+    nodo = generador.choice(candidatos)
+    return nodo
+
+def probabilidades_salto_dirigido(G, T_obs, dist):
     """
     Calcula la probabilidad para el 'Salto Dirigido por los Datos' basándose en:
-    1. Proximidad a nodos infectados: Se da más peso a los nodos cercanos a los que 
+    1. Proximidad a nodos infectados: Se da más peso a los nodos cercanos a los que
        se detectaron primero (bajos T_obs).
-    2. Centralidad de intermediación: Identifica nodos que actúan como puentes 
+    2. Centralidad de intermediación: Identifica nodos que actúan como puentes
        estratégicos dentro de la topología de la red.
+
+    Parámetros:
+    - G (networkx.Graph): Grafo sobre el que se opera.
+    - T_obs (dict): Diccionario con los tiempos de observación de los nodos infectados.
+    - dist (dict): Diccionario de distancias entre pares de nodos del grafo.
+
+    Retorna:
+    - probabilidades_salto (np.ndarray): Vector de probabilidades de salto normalizado
+      para cada nodo del grafo.
     """
-    observed_nodes = list(T_obs.keys())
-    
-    # Estimamos la intermediación (Betweenness)
-    centrality = nx.betweenness_centrality(G, k=200)
-    
-    # Usamos len(G) para asegurar que el tamaño es correcto
-    hop_probabilities = np.zeros(len(G))
+    nodos_observados = list(T_obs.keys())
+    centralidad = nx.betweenness_centrality(G, k=200)
+    probabilidades_salto = np.zeros(len(G))
 
-    for node in G.nodes():
-        # Calculamos distancias a los nodos observados
-        # (Asegúrate de que 'dist' sea un diccionario de distancias)
-        dist_to_obs = [dist[node][obs] for obs in observed_nodes]
+    for nodo in G.nodes():
+        dist_a_obs = [dist[nodo][obs] for obs in nodos_observados]
+        puntuacion_centralidad = centralidad[nodo]
+        peso_proximidad = 1.0 / (1.0 + min(dist_a_obs))
+        probabilidades_salto[nodo] = puntuacion_centralidad * peso_proximidad
 
-        centrality_score = centrality[node]
+    if np.sum(probabilidades_salto) > 0:
+        probabilidades_salto = probabilidades_salto / np.sum(probabilidades_salto)
 
-        # Peso de proximidad: a menor distancia, mayor peso
-        # Proximity weight: 1 / (1 + d)
-        proximity_weight = 1.0 / (1.0 + min(dist_to_obs))
+    return probabilidades_salto
 
-        # El score final combina la importancia estructural y la temporal
-        hop_probabilities[node] = centrality_score * proximity_weight
 
-    # Normalizamos: la suma de todas las probabilidades debe ser 1.0
-    if np.sum(hop_probabilities) > 0:
-        hop_probabilities = hop_probabilities / np.sum(hop_probabilities)
+def log_platano(x, B=0.03):
+    """
+    Log-densidad objetivo de la distribución plátano.
 
-    return hop_probabilities
-    
-# Banana----------------------------------------------------------------------
+    Parámetros:
+    - x (array-like): Vector de dos componentes [x0, x1] en el que evaluar la densidad.
+    - B (float): Parámetro de curvatura de la distribución. Por defecto 0.03.
 
-def log_banana(x, B=0.03):
-    """Log-densidad objetivo de la distribucion platano."""
+    Retorna:
+    - (float): Valor del logaritmo de la densidad evaluado en x.
+    """
     return -0.5 * (x[0]**2 / 100 + (x[1] + B * x[0]**2 - 100 * B)**2)
