@@ -2,203 +2,197 @@ import numpy as np
 import copy
 from scipy.stats import multivariate_normal
 
-def box_muller(D, num_samples, seed=1):
+def box_muller(D, num_muestras, semilla=1):
     """
     Genera una matriz de muestras usando el método polar de Box-Muller.
     
     Parámetros:
     - D (int): Dimensión del espacio (número de columnas).
-    - num_samples (int): Número total de muestras a generar (número de filas).
-    - seed (int): Semilla para la replicabilidad de los resultados.
+    - num_muestras (int): Número total de muestras a generar (número de filas).
+    - semilla (int): Semilla para la replicabilidad de los resultados.
     
     Retorna:
-    - samples_matrix (np.ndarray): Matriz de tamaño (num_samples, D) con muestras N(0, I_D).
+    - matriz_muestras (np.ndarray): Matriz de tamaño (num_muestras, D) con muestras N(0, I_D).
     """
-    # Establecemos una semilla para la replicabilidad de la imagen
-    rng = np.random.default_rng(seed)
+    generador = np.random.default_rng(semilla)
     
-    # Calculamos el total de números individuales que necesitamos generar
-    total_samples = D * num_samples
-    samples = []
+    total_muestras = D * num_muestras
+    muestras = []
 
-    while len(samples) < total_samples: # Aplicamos el algoritmo de Box-Muller en forma polar
-        # Generamos dos muestras uniformemente distribuidas en (-1,1)
-        X1 = 2 * rng.random() - 1
-        X2 = 2 * rng.random() - 1
+    while len(muestras) < total_muestras:
+        x1 = 2 * generador.random() - 1
+        x2 = 2 * generador.random() - 1
 
-        R = X1 ** 2 + X2 ** 2 # Calculamos el radio al cuadrado
+        radio = x1 ** 2 + x2 ** 2
 
-        if 0 < R < 1: # Rechazamos si está fuera del disco unidad
-            factor = np.sqrt(-2 * np.log(R) / R) # Cambio de variable
-            Y1 = X1 * factor
-            Y2 = X2 * factor
+        if 0 < radio < 1:
+            factor = np.sqrt(-2 * np.log(radio) / radio)
+            y1 = x1 * factor
+            y2 = x2 * factor
             
-            # Usamos extend para añadir ambos valores
-            samples.extend([Y1, Y2])
+            muestras.extend([y1, y2])
 
-    # Recortamos exactamente al número de elementos que necesitamos (por si sobra uno)
-    flat_samples = np.array(samples)[:total_samples] 
+    muestras_planas = np.array(muestras)[:total_muestras]
     
-    # Reorganizamos la lista plana en una matriz de (num_samples filas, D columnas)
-    samples_matrix = flat_samples.reshape((num_samples, D))
+    matriz_muestras = muestras_planas.reshape((num_muestras, D))
     
-    return samples_matrix 
+    return matriz_muestras
 
-def rejection(target_pdf, proposal_pdf, proposal_sampler, k, num_samples, seed=1):
+
+def rechazo(pdf_objetivo, pdf_propuesta, muestreador_propuesta, k, num_muestras, semilla=1):
     """
     Aplica el algoritmo de muestreo por rechazo.
     
     Parámetros:
-    - target_pdf (callable): Función que evalúa la PDF de la distribución objetivo p(x).
-    - proposal_pdf (callable): Función que evalúa la PDF de la propuesta q(x).
-    - proposal_sampler (callable): Función que genera 'num_samples' muestras de la propuesta.
+    - pdf_objetivo (callable): Función que evalúa la PDF de la distribución objetivo p(x).
+    - pdf_propuesta (callable): Función que evalúa la PDF de la propuesta q(x).
+    - muestreador_propuesta (callable): Función que genera 'num_muestras' muestras de la propuesta.
     - k (float o array): Constante de escalado tal que p(x) <= k * q(x) en todo el dominio.
-    - num_samples (int): Número total de candidatos a generar.
-    - seed (int): Semilla para la replicabilidad de los resultados.
+    - num_muestras (int): Número total de candidatos a generar.
+    - semilla (int): Semilla para la replicabilidad de los resultados.
     
     Retorna:
-    - accepted_samples (np.ndarray): Las muestras que han sido aceptadas.
-    - acceptance_rate (float): La proporción de muestras aceptadas (0 a 1).
+    - muestras_aceptadas (np.ndarray): Las muestras que han sido aceptadas.
+    - tasa_aceptacion (float): La proporción de muestras aceptadas (0 a 1).
     """
-    # Establecemos una semilla para la replicabilidad de la imagen
-    rng = np.random.default_rng(seed)
+    generador = np.random.default_rng(semilla)
     
-    # Extraemos todas las muestras candidatas
-    x = proposal_sampler(num_samples)
+    x = muestreador_propuesta(num_muestras)
     
-    # Evaluamos ambas PDF en los puntos generados
-    p_x = target_pdf(x)
-    q_x = proposal_pdf(x)
+    p_x = pdf_objetivo(x)
+    q_x = pdf_propuesta(x)
     
-    # Generamos los umbrales uniformes para decidir si aceptamos
-    u = rng.uniform(0, k * q_x) # u se genera entre 0 y k * q(x)
+    u = generador.uniform(0, k * q_x)
     
-    # Aplicamos el filtro de aceptación: u <= p(x)
-    accepted_mask = (q_x > 1e-10) & (u <= p_x) # Mantenemos q_z > 1e-10 para evitar colas de probabilidad 0
+    mascara_aceptacion = (q_x > 1e-10) & (u <= p_x)
     
-    # Extraemos solo las muestras que cumplieron la condición
-    accepted_samples = x[accepted_mask]
+    muestras_aceptadas = x[mascara_aceptacion]
     
-    # Calculamos la tasa de aceptación
-    acceptance_rate = len(accepted_samples) / num_samples
+    tasa_aceptacion = len(muestras_aceptadas) / num_muestras
     
-    return accepted_samples, acceptance_rate
+    return muestras_aceptadas, tasa_aceptacion
 
-def random_walk_metropolis(target_pdf, num_iterations, initial_position, sigma_proposal, seed=1):
+
+def random_walk_metropolis(pdf_objetivo, num_iteraciones, posicion_inicial, sigma_propuesta, semilla=1):
     """
     Algoritmo Random Walk Metropolis para cualquier distribución objetivo.
     
     Parámetros:
-    - target_pdf (callable): Función que evalúa la densidad de probabilidad p(x).
-    - num_iterations (int): Número de pasos de la cadena.
-    - initial_position (array-like): Punto de inicio de la cadena.
-    - sigma_proposal (float): Desviación estándar del salto de propuesta.
-    - seed (int): Semilla para la replicabilidad de los resultados.
+    - pdf_objetivo (callable): Función que evalúa la densidad de probabilidad p(x).
+    - num_iteraciones (int): Número de pasos de la cadena.
+    - posicion_inicial (array-like): Punto de inicio de la cadena.
+    - sigma_propuesta (float): Desviación estándar del salto de propuesta.
+    - semilla (int): Semilla para la replicabilidad de los resultados.
     
     Retorna:
     - np.ndarray: Matriz con las muestras de la cadena.
     - float: Tasa de aceptación.
     """
-    # Establecemos una semilla para la replicabilidad del experimento
-    rng = np.random.default_rng(seed)
+    generador = np.random.default_rng(semilla)
 
-    accepted_samples = []
-    accepted_count = 0
+    muestras_aceptadas = []
+    contador_aceptadas = 0
     
-    current_position = np.array(initial_position) # Aseguramos que la posición inicial sea un array de NumPy
-    D = len(current_position) # Inferimos la dimensión desde la posición inicial
-    p_current = target_pdf(current_position) # Calculamos la densidad inicial
+    posicion_actual = np.array(posicion_inicial)
+    dimension = len(posicion_actual)
+    p_actual = pdf_objetivo(posicion_actual)
 
-    for i in range(num_iterations):
-        # Generamos una propuesta de nuevo estado (z_prime) usando ruido gaussiano
-        proposal_noise = rng.normal(loc=0.0, scale=sigma_proposal, size=D)
-        z_prime = current_position + proposal_noise
+    for i in range(num_iteraciones):
+        ruido_propuesta = generador.normal(loc=0.0, scale=sigma_propuesta, size=dimension)
+        z_primo = posicion_actual + ruido_propuesta
 
-        p_prime = target_pdf(z_prime) # Evaluamos la densidad del salto propuesto
+        p_primo = pdf_objetivo(z_primo)
 
-        # Calculamos la probabilidad de aceptación alpha
-        if p_current == 0 and p_prime > 0:
-            alpha = 1.0
-        elif p_current == 0 and p_prime == 0:
-            alpha = 0.0
-        elif p_current > 0:
-            alpha = min(1.0, p_prime / p_current)
+        if p_actual == 0 and p_primo > 0:
+            alfa = 1.0
+        elif p_actual == 0 and p_primo == 0:
+            alfa = 0.0
+        elif p_actual > 0:
+            alfa = min(1.0, p_primo / p_actual)
         else:
-            alpha = 0.0
+            alfa = 0.0
 
-        # Vemos si el salto propuesto se acepta o no
-        u = rng.random()
-        # Si se acepta, actualizamos la posición y la densidad actual
-        if u <= alpha:
-            current_position = z_prime
-            p_current = p_prime
-            accepted_count += 1
+        u = generador.random()
+        if u <= alfa:
+            posicion_actual = z_primo
+            p_actual = p_primo
+            contador_aceptadas += 1
 
-        # Agregamos la posición actual a las muestras
-        accepted_samples.append(current_position.copy())
+        muestras_aceptadas.append(posicion_actual.copy())
 
-    # Calculamos la tasa de aceptación
-    acceptance_rate = accepted_count / num_iterations
+    tasa_aceptacion = contador_aceptadas / num_iteraciones
 
-    return np.array(accepted_samples), acceptance_rate
+    return np.array(muestras_aceptadas), tasa_aceptacion
 
-def metropolis_hastings_log(initial_state, log_target_pdf, proposal_sampler, log_proposal_pdf, iterations, seed = 1):
-    # Establecemos una semilla para la replicabilidad de la imagen
-    rng = np.random.default_rng(seed)
 
-    best_state = copy.deepcopy(initial_state)
-    current_state = copy.deepcopy(initial_state)
+def metropolis_hastings_logaritmico(estado_inicial, log_pdf_objetivo, muestreador_propuesta, log_pdf_propuesta, iteraciones, semilla=1):
+    """
+    Algoritmo Metropolis-Hastings en espacio logarítmico para cualquier distribución objetivo.
     
-    # Calculamos la probabilidad logarítmica del estado inicial
-    current_log_target = log_target_pdf(initial_state)
-    best_log_target = current_log_target
+    Parámetros:
+    - estado_inicial: Punto de inicio de la cadena.
+    - log_pdf_objetivo (callable): Función que evalúa el logaritmo de la densidad objetivo.
+    - muestreador_propuesta (callable): Función que propone un nuevo estado dado el actual.
+    - log_pdf_propuesta (callable): Función que evalúa el logaritmo de la densidad de propuesta.
+    - iteraciones (int): Número de pasos de la cadena.
+    - semilla (int): Semilla para la replicabilidad de los resultados.
+    
+    Retorna:
+    - mejor_estado: El estado con mayor log-probabilidad encontrado.
+    - historial (list): Historial de log-probabilidades en cada iteración.
+    - historial_estados (list): Historial de estados visitados en cada iteración.
+    """
+    generador = np.random.default_rng(semilla)
+
+    mejor_estado = copy.deepcopy(estado_inicial)
+    estado_actual = copy.deepcopy(estado_inicial)
+    
+    log_objetivo_actual = log_pdf_objetivo(estado_inicial)
+    mejor_log_objetivo = log_objetivo_actual
     
     historial = []
     historial_estados = []
 
-    for i in range(iterations):
-        # Proponemos un nuevo estado
-        proposed_state = proposal_sampler(current_state, rng)
+    for i in range(iteraciones):
+        estado_propuesto = muestreador_propuesta(estado_actual, generador)
         
-        # Calculamos log-probabilidad del nuevo estado
-        proposed_log_target = log_target_pdf(proposed_state)
+        log_objetivo_propuesto = log_pdf_objetivo(estado_propuesto)
         
-        # Calculamos las log-probabilidades de transición Q (Hastings)
-        log_proposal_forward = log_proposal_pdf(proposed_state, current_state)
-        log_proposal_backward = log_proposal_pdf(current_state, proposed_state)
+        log_propuesta_adelante = log_pdf_propuesta(estado_propuesto, estado_actual)
+        log_propuesta_atras = log_pdf_propuesta(estado_actual, estado_propuesto)
         
-        # Calculamos el Log-Ratio de aceptación
-        log_ratio = (proposed_log_target - current_log_target) + (log_proposal_backward - log_proposal_forward)
+        log_ratio = (log_objetivo_propuesto - log_objetivo_actual) + (log_propuesta_atras - log_propuesta_adelante)
         
-        # Criterio de aceptación en espacio logarítmico
-        if log_ratio >= 0 or np.log(rng.random()) < log_ratio:
-            current_state = proposed_state
-            current_log_target = proposed_log_target
+        if log_ratio >= 0 or np.log(generador.random()) < log_ratio:
+            estado_actual = estado_propuesto
+            log_objetivo_actual = log_objetivo_propuesto
             
-            # Guardamos el mejor absoluto encontrado
-            if current_log_target > best_log_target:
-                best_log_target = current_log_target
-                best_state = copy.deepcopy(current_state)
+            if log_objetivo_actual > mejor_log_objetivo:
+                mejor_log_objetivo = log_objetivo_actual
+                mejor_estado = copy.deepcopy(estado_actual)
                 
-        historial.append(current_log_target)
+        historial.append(log_objetivo_actual)
+        historial_estados.append(copy.deepcopy(estado_actual))
         
-        # Guardamos una copia del estado del historial
-        historial_estados.append(copy.deepcopy(current_state))
-        
-    return best_state, historial, historial_estados
+    return mejor_estado, historial, historial_estados
 
-def composite_transition(base_transitions, alphas):
+
+def transicion_compuesta(transiciones_base, alfas):
     """
-    Fábrica de transiciones compuestas: Toma un vector de transiciones base y 
+    Fábrica de transiciones compuestas: toma un vector de transiciones base y
     un vector de probabilidades y devuelve una única transición unificada.
+    
+    Parámetros:
+    - transiciones_base (array-like): Vector de funciones de transición base.
+    - alfas (array-like): Vector de probabilidades asociadas a cada transición base.
+    
+    Retorna:
+    - transicion_unificada (callable): Función de transición que combina las transiciones base.
     """
-    assert np.isclose(sum(alphas), 1.0), "¡Error! El vector de alphas debe sumar 1."
+    assert np.isclose(sum(alfas), 1.0), "¡Error! El vector de alfas debe sumar 1."
 
-    def unified_transition(current_state, rng):
-        # Elegimos una transición base según el vector de alphas
-        chosen_transition = rng.choice(base_transitions, p=alphas)
-        
-        # Ejecutamos la transición elegida
-        return chosen_transition(current_state, rng)
+    def transicion_unificada(estado_actual, generador):
+        transicion_elegida = generador.choice(transiciones_base, p=alfas)
+        return transicion_elegida(estado_actual, generador)
 
-    return unified_transition
+    return transicion_unificada
