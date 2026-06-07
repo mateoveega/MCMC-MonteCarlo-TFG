@@ -3,7 +3,7 @@ import unicodedata
 import numpy as np
 import math
 import networkx as nx
-from scipy.stats import norm
+from scipy.stats import norm, multivariate_normal
 
 # Capítulo 1 ==================================================================
 
@@ -44,6 +44,14 @@ def generador_lcg(n, semilla=1):
         x = (a * x + c) % m
         resultados.append(x / m)
     return np.array(resultados).reshape(n, 3)
+
+# Capítulo 2 ==================================================================
+
+# lim_gibbs -------------------------------------------------------------------
+
+def target_pdf_lim_gibbs(position, mu, sigma):
+    return multivariate_normal.pdf(position, mean=mu, cov=sigma)
+
 
 
 
