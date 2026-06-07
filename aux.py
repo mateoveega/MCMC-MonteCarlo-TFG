@@ -7,7 +7,7 @@ from scipy.stats import norm
 
 # Capítulo 1 ==================================================================
 
-# rechazo----------------------------------------------------------------------
+# rechazo ----------------------------------------------------------------------
 def pdf_objetivo_rechazo(x):
     return 0.4 * norm.pdf(x, loc=-2, scale=1) + 0.6 * norm.pdf(x, loc=3, scale=1)
 
@@ -32,6 +32,19 @@ def ln_pdf_envolvente_ars(x, nodos_x, nodos_y, nodos_dy):
 
 def funcion_compresion_ars(x, nodos_x, nodos_y):
     return np.interp(x, nodos_x, nodos_y, left=-np.inf, right=-np.inf)
+
+# comparacion_prng --------------------------------------------------------------
+def generador_lcg(n, semilla=1):
+    a = 65539
+    c = 0
+    m = 2 ** 31
+    x = semilla
+    resultados = []
+    for i in range(n * 3):
+        x = (a * x + c) % m
+        resultados.append(x / m)
+    return np.array(resultados).reshape(n, 3)
+
 
 
 def caracter_a_entero(c):
