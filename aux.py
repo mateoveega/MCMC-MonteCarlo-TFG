@@ -24,13 +24,13 @@ def ln_pdf_objetivo_ars(x):
 def ln_pdf_objetivo_prima_ars(x):
     return -2 * (x - 1)
 
-def ln_pdf_envolvente(x, nodos_x, nodos_y, nodos_dy):
+def ln_pdf_envolvente_ars(x, nodos_x, nodos_y, nodos_dy):
     tangentes = []
     for i in range(len(nodos_x)):
         tangentes.append(nodos_y[i] + nodos_dy[i] * (x - nodos_x[i]))
     return np.min(tangentes, axis=0)
 
-def funcion_compresion(x, nodos_x, nodos_y):
+def funcion_compresion_ars(x, nodos_x, nodos_y):
     return np.interp(x, nodos_x, nodos_y, left=-np.inf, right=-np.inf)
 
 
