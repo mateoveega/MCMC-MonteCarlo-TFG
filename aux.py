@@ -3,6 +3,7 @@ import unicodedata
 import numpy as np
 import math
 import networkx as nx
+from scipy.stats import norm
 # Capítulo 1 ==================================================================
 # rechazo----------------------------------------------------------------------
 def pdf_objetivo_rechazo(x):
