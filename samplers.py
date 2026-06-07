@@ -15,7 +15,6 @@ def box_muller(D, num_muestras, semilla=1):
     - matriz_muestras (np.ndarray): Matriz de tamaño (num_muestras, D) con muestras N(0, I_D).
     """
     generador = np.random.default_rng(semilla)
-    
     total_muestras = D * num_muestras
     muestras = []
 
@@ -24,7 +23,6 @@ def box_muller(D, num_muestras, semilla=1):
         x2 = 2 * generador.random() - 1
 
         radio = x1 ** 2 + x2 ** 2
-
         if 0 < radio < 1:
             factor = np.sqrt(-2 * np.log(radio) / radio)
             y1 = x1 * factor
@@ -33,9 +31,7 @@ def box_muller(D, num_muestras, semilla=1):
             muestras.extend([y1, y2])
 
     muestras_planas = np.array(muestras)[:total_muestras]
-    
     matriz_muestras = muestras_planas.reshape((num_muestras, D))
-    
     return matriz_muestras
 
 
@@ -58,18 +54,13 @@ def rechazo(pdf_objetivo, pdf_propuesta, muestreador_propuesta, k, num_muestras,
     generador = np.random.default_rng(semilla)
     
     x = muestreador_propuesta(num_muestras)
-    
     p_x = pdf_objetivo(x)
     q_x = pdf_propuesta(x)
-    
     u = generador.uniform(0, k * q_x)
     
     mascara_aceptacion = (q_x > 1e-10) & (u <= p_x)
-    
     muestras_aceptadas = x[mascara_aceptacion]
-    
     tasa_aceptacion = len(muestras_aceptadas) / num_muestras
-    
     return muestras_aceptadas, tasa_aceptacion
 
 
@@ -100,7 +91,6 @@ def random_walk_metropolis(pdf_objetivo, num_iteraciones, posicion_inicial, sigm
     for i in range(num_iteraciones):
         ruido_propuesta = generador.normal(loc=0.0, scale=sigma_propuesta, size=dimension)
         z_primo = posicion_actual + ruido_propuesta
-
         p_primo = pdf_objetivo(z_primo)
 
         if p_actual == 0 and p_primo > 0:
@@ -117,15 +107,13 @@ def random_walk_metropolis(pdf_objetivo, num_iteraciones, posicion_inicial, sigm
             posicion_actual = z_primo
             p_actual = p_primo
             contador_aceptadas += 1
-
         muestras_aceptadas.append(posicion_actual.copy())
 
     tasa_aceptacion = contador_aceptadas / num_iteraciones
-
     return np.array(muestras_aceptadas), tasa_aceptacion
 
 
-def metropolis_hastings_logaritmico(estado_inicial, log_pdf_objetivo, muestreador_propuesta, log_pdf_propuesta, iteraciones, semilla=1):
+def metropolis_hastings_log(estado_inicial, log_pdf_objetivo, muestreador_propuesta, log_pdf_propuesta, iteraciones, semilla=1):
     """
     Algoritmo Metropolis-Hastings en espacio logarítmico para cualquier distribución objetivo.
     
@@ -194,5 +182,4 @@ def transicion_compuesta(transiciones_base, alfas):
     def transicion_unificada(estado_actual, generador):
         transicion_elegida = generador.choice(transiciones_base, p=alfas)
         return transicion_elegida(estado_actual, generador)
-
     return transicion_unificada
