@@ -164,7 +164,29 @@ def metropolis_hastings_log(estado_inicial, log_pdf_objetivo, muestreador_propue
         
     return mejor_estado, historial, historial_estados
 
+def gibbs(mu, sigma, num_muestras, posicion_inicial, semilla=1):
+    rng = np.random.default_rng(semilla)
+    muestras = []
+    posicion_actual = np.array(posicion_inicial, dtype=float)
 
+    mu_x, mu_y = mu[0], mu[1]
+    var_x, cov_xy, var_y = sigma[0, 0], sigma[0, 1], sigma[1, 1]
+
+    for i in range(num_muestras):
+        mu_x_cond = mu_x + (cov_xy / var_y) * (posicion_actual[1] - mu_y)
+        sigma_x_cond = np.sqrt(var_x - (cov_xy**2 / var_y))
+        posicion_actual[0] = rng.normal(loc=mu_x_cond, scale=sigma_x_cond)
+
+        mu_y_cond = mu_y + (cov_xy / var_x) * (posicion_actual[0] - mu_x)
+        sigma_y_cond = np.sqrt(var_y - (cov_xy**2 / var_x))
+        posicion_actual[1] = rng.normal(loc=mu_y_cond, scale=sigma_y_cond)
+
+        muestras.append(posicion_actual.copy())
+
+    return np.array(muestras)
+
+    return np.array(samples)
+    
 def transicion_compuesta(transiciones_base, alfas):
     """
     Fábrica de transiciones compuestas: toma un vector de transiciones base y
