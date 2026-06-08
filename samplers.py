@@ -205,3 +205,37 @@ def transicion_compuesta(transiciones_base, alfas):
         transicion_elegida = generador.choice(transiciones_base, p=alfas)
         return transicion_elegida(estado_actual, generador)
     return transicion_unificada
+
+def recocido_simulado_log(estado_inicial, log_objetivo, muestreador, log_propuesta, iteraciones, T0=100.0, gamma=0.9995, semilla=1):
+    rng = np.random.default_rng(semilla)
+    estado_actual = estado_inicial
+    log_p_actual = log_objetivo(estado_actual)
+
+    historial_estados = []
+    historial_energia = []
+    T = T0
+
+    for i in range(iteraciones):
+        estado_propuesto = muestreador(estado_actual, rng)
+        log_p_propuesto = log_objetivo(estado_propuesto)
+
+        log_q_adelante = log_propuesta(estado_propuesto, estado_actual)
+        log_q_atras = log_propuesta(estado_actual, estado_propuesto)
+
+        log_alfa = (log_p_propuesto - log_p_actual) + (log_q_atras - log_q_adelante)
+
+        if log_alfa > 0:
+            log_alfa_T = 0.0
+        else:
+            log_alfa_T = log_alfa / T
+
+        if np.log(rng.random()) <= log_alfa_T:
+            estado_actual = estado_propuesto
+            log_p_actual = log_p_propuesto
+
+        historial_estados.append(estado_actual)
+        historial_energia.append(-log_p_actual) 
+
+        T = max(T * gamma, 1e-5)
+
+    return estado_actual, historial_energia, historial_estados
