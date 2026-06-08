@@ -162,9 +162,6 @@ def log_pdf_objetivo_mensaje_encriptado(estado_actual):
 
 def log_pdf_propuesta_mensaje_encriptado(estado_propuesto, estado_actual):
     return 0.0
-    
-def log_pdf_propuesta_mensaje_encriptado(estado_propuesto, estado_actual):
-    return 0.0
 
 
 def nodo_bajo_grado(G, semilla=1):
