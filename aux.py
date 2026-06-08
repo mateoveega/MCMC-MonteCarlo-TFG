@@ -52,6 +52,10 @@ def generador_lcg(n, semilla=1):
 def target_pdf_lim_gibbs(position, mu, sigma):
     return multivariate_normal.pdf(position, mean=mu, cov=sigma)
 
+# Capítulo 3 ==================================================================
+
+# mensaje_encriptado ----------------------------------------------------------
+
 def caracter_a_entero(c):
     """
     Mapea un carácter a su índice entero correspondiente.
@@ -118,9 +122,9 @@ def obtener_matriz_bigramas_27(texto, tamano):
     matriz = matriz / matriz.sum(axis=1, keepdims=True)
     return matriz
 
-def transicion_b1_doble(estado_actual, generador):
+def transicion_q1_doble(estado_actual, generador):
     """
-    B1 (Exploración Local): Intercambia dos caracteres cualesquiera de la permutación.
+    Q1 (Exploración Doble): Intercambia dos caracteres cualesquiera de la permutación.
     Proporciona movilidad básica en todo el espacio de búsqueda.
 
     Parámetros:
@@ -135,29 +139,9 @@ def transicion_b1_doble(estado_actual, generador):
     propuesta[p1], propuesta[p2] = propuesta[p2], propuesta[p1]
     return propuesta
 
-def transicion_b2_estructural(estado_actual, generador):
+def transicion_q2_triple(estado_actual, generador):
     """
-    B2 (Exploración Estructural): Intercambia dos letras frecuentes de la permutación.
-    Favorece el intercambio de letras comunes del español (A, E, O, S, R, N).
-
-    Parámetros:
-    - estado_actual (np.ndarray): Permutación actual de la clave.
-    - generador (np.random.Generator): Generador de números aleatorios.
-
-    Retorna:
-    - propuesta (np.ndarray): Nueva permutación con dos letras frecuentes intercambiadas.
-    """
-    propuesta = list(estado_actual.copy())
-    letras_objetivo = [0, 4, 15, 19, 18, 13]
-    L1, L2 = generador.choice(letras_objetivo, size=2, replace=False)
-    idx1 = propuesta.index(L1)
-    idx2 = propuesta.index(L2)
-    propuesta[idx1], propuesta[idx2] = propuesta[idx2], propuesta[idx1]
-    return np.array(propuesta)
-
-def transicion_b2_triple(estado_actual, generador):
-    """
-    B2 (Exploración Triple): Realiza una rotación cíclica entre tres posiciones de la permutación.
+    Q2 (Exploración Triple): Realiza una rotación cíclica entre tres posiciones de la permutación.
     Proporciona una perturbación más compleja que el intercambio simple.
 
     Parámetros:
@@ -172,6 +156,9 @@ def transicion_b2_triple(estado_actual, generador):
     val0, val1, val2 = propuesta[idx]
     propuesta[idx[1]], propuesta[idx[2]], propuesta[idx[0]] = val0, val1, val2
     return propuesta
+
+
+
 
 def nodo_bajo_grado(G, semilla=1):
     """
