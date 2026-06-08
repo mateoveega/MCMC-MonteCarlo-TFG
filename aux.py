@@ -163,6 +163,36 @@ def log_pdf_objetivo_mensaje_encriptado(estado_actual, O, M_log_esp):
 def log_pdf_propuesta_mensaje_encriptado(estado_propuesto, estado_actual):
     return 0.0
 
+# nodo_cero -------------------------------------------------------------------
+
+def log_pdf_objetivo_nodo_cero(estado_actual, matriz_distancias, indices_obs, velocidad_propagacion, valores_obs, desviacion):
+    distancias = matriz_distancias[estado_actual, indices_obs]
+    tiempos_teoricos = distancias * velocidad_propagacion
+    error_total = np.sum((valores_obs - tiempos_teoricos)**2)
+
+    return - error_total / (2 * desviacion**2)
+
+def generador_guiado_nodo_cero(nodo_actual, rng, p, G):
+    return rng.choice(G.nodes(), p)
+
+def generador_random_walk_nodo_cero(nodo_actual, rng, G):
+    vecinos = list(G.neighbors(nodo_actual))
+    return rng.choice(vecinos)
+
+def log_pdf_propuesta_nodo_cero(estado_propuesto, estado_actual, probabilidades_salto, G, alfa_guiado=0.15):
+    p_guiado = probabilidades_salto[estado_propuesto]
+    vecinos_actuales = list(G.neighbors(estado_actual))
+
+    if estado_propuesto in vecinos_actuales:
+        p_ca = 1.0 / len(vecinos_actuales)
+    else:
+        p_ca = 0.0
+
+    p_total = (alfa_guiado * p_guiado) + ((1.0 - alfa_guiado) * p_ca)
+    eps = 1e-12
+
+    return np.log(p_total + eps)
+
 
 def nodo_bajo_grado(G, semilla=1):
     """
