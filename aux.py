@@ -157,8 +157,7 @@ def transicion_q2_triple(estado_actual, generador):
     propuesta[idx[1]], propuesta[idx[2]], propuesta[idx[0]] = val0, val1, val2
     return propuesta
 
-dim_alfabeto = 27
-def log_pdf_objetivo_mensaje_encriptado(estado_actual, O = np.zeros((dim_alfabeto, dim_alfabeto))):
+def log_pdf_objetivo_mensaje_encriptado(estado_actual, O, M_log_esp):
         return np.sum(O * M_log_esp[np.ix_(estado_actual, estado_actual)])
 
 def log_pdf_propuesta_mensaje_encriptado(estado_propuesto, estado_actual):
