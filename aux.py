@@ -173,7 +173,7 @@ def log_pdf_objetivo_nodo_cero(estado_actual, matriz_distancias, indices_obs, ve
     return - error_total / (2 * desviacion**2)
 
 def generador_guiado_nodo_cero(nodo_actual, rng, p, G):
-    return rng.choice(G.nodes(), p)
+    return rng.choice(list(G.nodes()), p=p)
 
 def generador_random_walk_nodo_cero(nodo_actual, rng, G):
     vecinos = list(G.neighbors(nodo_actual))
