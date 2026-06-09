@@ -261,3 +261,10 @@ def log_platano(x, B=0.03):
 
 def pdf_platano(x):
     return np.exp(log_platano(x))
+
+# camino_gibbs -------------------------------------------------------------------------------------
+
+def calcular_energia_total(p):
+    e_obs = np.sum(mapa_costes[p[:, 0], p[:, 1]])
+    e_elastica = lam * np.sum(np.sum((p[1:] - p[:-1])**2, axis=1))
+    return e_obs + e_elastica
