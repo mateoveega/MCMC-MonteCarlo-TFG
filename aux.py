@@ -259,5 +259,5 @@ def log_platano(x, B=0.03):
     """
     return -0.5 * (x[0]**2 / 100 + (x[1] + B * x[0]**2 - 100 * B)**2)
 
-def pdf_banana(x):
-    return np.exp(log_banana(x))
+def pdf_platano(x):
+    return np.exp(log_platano(x))
