@@ -244,6 +244,7 @@ def probabilidades_salto_dirigido(G, T_obs, dist):
 
     return probabilidades_salto
 
+# platano ----------------------------------------------------------------------------------
 
 def log_platano(x, B=0.03):
     """
@@ -257,3 +258,6 @@ def log_platano(x, B=0.03):
     - (float): Valor del logaritmo de la densidad evaluado en x.
     """
     return -0.5 * (x[0]**2 / 100 + (x[1] + B * x[0]**2 - 100 * B)**2)
+
+def pdf_banana(x):
+    return np.exp(log_banana(x))
