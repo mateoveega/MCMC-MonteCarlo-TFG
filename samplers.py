@@ -184,8 +184,6 @@ def gibbs(mu, sigma, num_muestras, posicion_inicial, semilla=1):
         muestras.append(posicion_actual.copy())
 
     return np.array(muestras)
-
-    return np.array(samples)
     
 def transicion_compuesta(transiciones_base, alfas):
     """
@@ -239,3 +237,29 @@ def recocido_simulado_log(estado_inicial, log_objetivo, muestreador, log_propues
         T = max(T * gamma, 1e-5)
 
     return estado_actual, historial_energia, historial_estados
+
+def paso_gibbs(trayectoria, mapa_costes, lam, beta, tamano_malla, generador):
+    T = len(trayectoria)
+    for t in range(1, T - 1):
+        cx, cy = trayectoria[t]
+
+        x_min, x_max = max(0, cx - 2), min(tamano_malla, cx + 3)
+        y_min, y_max = max(0, cy - 2), min(tamano_malla, cy + 3)
+
+        valores_x = np.arange(x_min, x_max)
+        valores_y = np.arange(y_min, y_max)
+        candidatos = np.transpose([np.tile(valores_x, len(valores_y)), np.repeat(valores_y, len(valores_x))])
+
+        e_local = mapa_costes[candidatos[:, 0], candidatos[:, 1]]
+        e_local = e_local + lam * np.sum((candidatos - trayectoria[t-1])**2, axis=1)
+        e_local = e_local + lam * np.sum((candidatos - trayectoria[t+1])**2, axis=1)
+
+        log_probs = -beta * e_local
+        log_probs = log_probs - np.max(log_probs)
+        probs = np.exp(log_probs)
+        probs = probs / np.sum(probs)
+
+        indice_elegido = generador.choice(len(candidatos), p=probs)
+        trayectoria[t] = candidatos[indice_elegido]
+        
+    return trayectoria
